@@ -15,6 +15,9 @@ $options = [
 
 try {
     $pdo = new PDO($dsn, $user, $pass, $options);
+    // Uyumlu olması için $conn değişkeni de aynı nesneye işaret etsin
+    // Bazı sayfalarda PDO bağlantısı $conn adıyla kullanılıyor
+    $conn = $pdo;
 } catch (\PDOException $e) {
     throw new \PDOException($e->getMessage(), (int)$e->getCode());
 }
