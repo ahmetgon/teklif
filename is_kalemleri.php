@@ -3,15 +3,15 @@
 include "db.php";
 if ($_SERVER["REQUEST_METHOD"] === "POST") {
     if (isset($_POST["baslik"])) {
-        $stmt = $pdo->prepare("INSERT INTO is_kalemleri (kategori_id, baslik, aciklama) VALUES (?, ?, ?)");
+        $stmt = $pdo->prepare("INSERT INTO items (category_id, name, description) VALUES (?, ?, ?)");
         $stmt->execute([$_POST["kategori_id"], $_POST["baslik"], $_POST["aciklama"]]);
     }
     if (isset($_POST["sil_id"])) {
-        $stmt = $pdo->prepare("DELETE FROM is_kalemleri WHERE id = ?");
+        $stmt = $pdo->prepare("DELETE FROM items WHERE id = ?");
         $stmt->execute([$_POST["sil_id"]]);
     }
 }
-$is_kalemleri = $pdo->query("SELECT ik.*, k.kategori_adi FROM is_kalemleri ik JOIN kategoriler k ON ik.kategori_id = k.id")->fetchAll();
+$is_kalemleri = $pdo->query("SELECT i.*, c.name AS kategori_adi FROM items i JOIN categories c ON i.category_id = c.id")->fetchAll();
 ?>
 <!DOCTYPE html>
 <html>
@@ -20,7 +20,7 @@ $is_kalemleri = $pdo->query("SELECT ik.*, k.kategori_adi FROM is_kalemleri ik JO
 <h2>İş Kalemleri Listesi</h2>
 <ul>
 <?php foreach ($is_kalemleri as $kalem): ?>
-<li>[<?= $kalem['kategori_adi'] ?>] <?= htmlspecialchars($kalem['baslik']) ?> - <?= htmlspecialchars($kalem['aciklama']) ?>
+<li>[<?= $kalem['kategori_adi'] ?>] <?= htmlspecialchars($kalem['name']) ?> - <?= htmlspecialchars($kalem['description']) ?>
 <form method="post" style="display:inline;"><input type="hidden" name="sil_id" value="<?= $kalem['id'] ?>"><button>Sil</button></form>
 </li>
 <?php endforeach; ?>

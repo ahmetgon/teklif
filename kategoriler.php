@@ -3,15 +3,15 @@
 include "db.php";
 if ($_SERVER["REQUEST_METHOD"] === "POST") {
     if (isset($_POST["kategori_adi"])) {
-        $stmt = $pdo->prepare("INSERT INTO kategoriler (kategori_adi) VALUES (?)");
+        $stmt = $pdo->prepare("INSERT INTO categories (name) VALUES (?)");
         $stmt->execute([$_POST["kategori_adi"]]);
     }
     if (isset($_POST["sil_id"])) {
-        $stmt = $pdo->prepare("DELETE FROM kategoriler WHERE id = ?");
+        $stmt = $pdo->prepare("DELETE FROM categories WHERE id = ?");
         $stmt->execute([$_POST["sil_id"]]);
     }
 }
-$kategoriler = $pdo->query("SELECT * FROM kategoriler")->fetchAll();
+$kategoriler = $pdo->query("SELECT * FROM categories")->fetchAll();
 ?>
 <!DOCTYPE html>
 <html>
@@ -20,7 +20,7 @@ $kategoriler = $pdo->query("SELECT * FROM kategoriler")->fetchAll();
 <h2>Kategori Listesi</h2>
 <ul>
 <?php foreach ($kategoriler as $kategori): ?>
-<li><?= htmlspecialchars($kategori['kategori_adi']) ?>
+<li><?= htmlspecialchars($kategori['name']) ?>
 <form method="post" style="display:inline;"><input type="hidden" name="sil_id" value="<?= $kategori['id'] ?>"><button>Sil</button></form>
 </li>
 <?php endforeach; ?>

@@ -9,10 +9,10 @@ use PhpOffice\PhpSpreadsheet\Style\Alignment;
 
 $scope_id = isset($_GET['scope_id']) ? intval($_GET['scope_id']) : 0;
 
-$stmt = $pdo->prepare("SELECT ss.*, c.name AS category_name, i.name AS item_name
+$stmt = $pdo->prepare("SELECT ss.*, c.name AS category_name, i.name AS item_name, i.description
                        FROM scope_selections ss
-                       JOIN categories c ON ss.category_id = c.id
                        JOIN items i ON ss.item_id = i.id
+                       JOIN categories c ON i.category_id = c.id
                        WHERE ss.scope_id = :scope_id");
 $stmt->execute(['scope_id' => $scope_id]);
 $data = $stmt->fetchAll();
