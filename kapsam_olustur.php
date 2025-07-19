@@ -9,14 +9,14 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
     try {
         // Yeni kapsamı ekle
-        $stmt = $conn->prepare("INSERT INTO scopes (name) VALUES (:name)");
+        $stmt = $pdo->prepare("INSERT INTO scopes (name) VALUES (:name)");
         $stmt->execute(['name' => $scopeName]);
-        $scopeId = $conn->lastInsertId();
+        $scopeId = $pdo->lastInsertId();
 
         // Dahil edilen iş kalemlerini ekle
         foreach ($includedItems as $itemId) {
             $description = $descriptions[$itemId] ?? '';
-            $stmt = $conn->prepare("INSERT INTO scope_items (scope_id, item_id, description) VALUES (:scope_id, :item_id, :description)");
+            $stmt = $pdo->prepare("INSERT INTO scope_items (scope_id, item_id, description) VALUES (:scope_id, :item_id, :description)");
             $stmt->execute([
                 'scope_id' => $scopeId,
                 'item_id' => $itemId,
@@ -48,7 +48,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         </tr>
 
         <?php
-        $stmt = $conn->query("SELECT items.id, items.name AS item_name, items.default_description, categories.name AS category_name
+        $stmt = $pdo->query("SELECT items.id, items.name AS item_name, items.default_description, categories.name AS category_name
                               FROM items
                               JOIN categories ON items.category_id = categories.id
                               ORDER BY categories.name, items.name");
