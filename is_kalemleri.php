@@ -1,67 +1,36 @@
 <?php
-require 'db.php';
-
-// Yeni iş kalemi ekleme
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['item_name'])) {
-    $name = trim($_POST['item_name']);
-    if ($name !== '') {
-        $stmt = $pdo->prepare("INSERT INTO work_items (name) VALUES (?)");
-        $stmt->execute([$name]);
+// is_kalemleri.php - tek dosyada iş kalemi listeleme, ekleme, silme işlemleri
+include "db.php";
+if ($_SERVER["REQUEST_METHOD"] === "POST") {
+    if (isset($_POST["baslik"])) {
+        $stmt = $conn->prepare("INSERT INTO is_kalemleri (kategori_id, baslik, aciklama) VALUES (?, ?, ?)");
+        $stmt->execute([$_POST["kategori_id"], $_POST["baslik"], $_POST["aciklama"]]);
+    }
+    if (isset($_POST["sil_id"])) {
+        $stmt = $conn->prepare("DELETE FROM is_kalemleri WHERE id = ?");
+        $stmt->execute([$_POST["sil_id"]]);
     }
 }
-
-// İş kalemi silme
-if (isset($_GET['delete']) && is_numeric($_GET['delete'])) {
-    $id = intval($_GET['delete']);
-    $stmt = $pdo->prepare("DELETE FROM work_items WHERE id = ?");
-    $stmt->execute([$id]);
-    header("Location: is_kalemleri.php");
-    exit;
-}
-
-// İş kalemi güncelleme
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_id'], $_POST['update_name'])) {
-    $id = intval($_POST['update_id']);
-    $name = trim($_POST['update_name']);
-    if ($name !== '') {
-        $stmt = $pdo->prepare("UPDATE work_items SET name = ? WHERE id = ?");
-        $stmt->execute([$name, $id]);
-    }
-    header("Location: is_kalemleri.php");
-    exit;
-}
-
-// İş kalemi listesini çek
-$items = $pdo->query("SELECT * FROM work_items ORDER BY id DESC")->fetchAll();
+$is_kalemleri = $conn->query("SELECT ik.*, k.kategori_adi FROM is_kalemleri ik JOIN kategoriler k ON ik.kategori_id = k.id")->fetchAll();
 ?>
-
-<h2>İş Kalemleri</h2>
-
-<form method="POST" style="margin-bottom: 20px;">
-    <label>Yeni İş Kalemi:</label>
-    <input type="text" name="item_name" required>
-    <button type="submit">Ekle</button>
+<!DOCTYPE html>
+<html>
+<head><title>İş Kalemleri</title></head>
+<body>
+<h2>İş Kalemleri Listesi</h2>
+<ul>
+<?php foreach ($is_kalemleri as $kalem): ?>
+<li>[<?= $kalem['kategori_adi'] ?>] <?= htmlspecialchars($kalem['baslik']) ?> - <?= htmlspecialchars($kalem['aciklama']) ?>
+<form method="post" style="display:inline;"><input type="hidden" name="sil_id" value="<?= $kalem['id'] ?>"><button>Sil</button></form>
+</li>
+<?php endforeach; ?>
+</ul>
+<h3>Yeni İş Kalemi Ekle</h3>
+<form method="post">
+Kategori ID: <input name="kategori_id"><br>
+Başlık: <input name="baslik"><br>
+Açıklama: <input name="aciklama"><br>
+<button>Ekle</button>
 </form>
-
-<table border="1" cellpadding="8" cellspacing="0">
-    <tr>
-        <th>ID</th>
-        <th>İş Kalemi Adı</th>
-        <th>Aksiyonlar</th>
-    </tr>
-    <?php foreach ($items as $item): ?>
-        <tr>
-            <td><?= $item['id'] ?></td>
-            <td>
-                <form method="POST" style="display:inline;">
-                    <input type="hidden" name="update_id" value="<?= $item['id'] ?>">
-                    <input type="text" name="update_name" value="<?= htmlspecialchars($item['name']) ?>">
-                    <button type="submit">Güncelle</button>
-                </form>
-            </td>
-            <td>
-                <a href="is_kalemleri.php?delete=<?= $item['id'] ?>" onclick="return confirm('Silmek istediğinize emin misiniz?')">Sil</a>
-            </td>
-        </tr>
-    <?php endforeach; ?>
-</table>
+</body>
+</html>

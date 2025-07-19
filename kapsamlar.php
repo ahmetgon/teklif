@@ -1,38 +1,31 @@
 <?php
-include 'db.php';
-include 'sidebar.php';
-?>
-
-<h2>Kapsamlar</h2>
-
-<a href="kapsam_olustur.php">+ Yeni Kapsam Oluştur</a>
-
-<?php
-// Tüm kapsamları al
-$stmt = $pdo->query("SELECT * FROM scopes ORDER BY id DESC");
-$scopes = $stmt->fetchAll();
-
-foreach ($scopes as $scope) {
-    echo "<hr>";
-    echo "<h3>" . htmlspecialchars($scope['name']) . "</h3>";
-
-    // Bu kapsama ait iş kalemlerini al
-    $stmt_items = $pdo->prepare("
-        SELECT s.item_name, s.description
-        FROM scope_selections s
-        WHERE s.scope_id = :scope_id
-    ");
-    $stmt_items->execute(['scope_id' => $scope['id']]);
-    $items = $stmt_items->fetchAll();
-
-    if ($items) {
-        echo "<ul>";
-        foreach ($items as $item) {
-            echo "<li><strong>" . htmlspecialchars($item['item_name']) . ":</strong> " . htmlspecialchars($item['description']) . "</li>";
-        }
-        echo "</ul>";
-    } else {
-        echo "<p><em>Bu kapsamda henüz iş kalemi seçilmemiş.</em></p>";
+// kapsamlar.php - tek dosyada kapsam listeleme, ekleme, silme işlemleri
+include "db.php";
+if ($_SERVER["REQUEST_METHOD"] === "POST") {
+    if (isset($_POST["kapsam_adi"])) {
+        $stmt = $conn->prepare("INSERT INTO kapsamlar (kapsam_adi) VALUES (?)");
+        $stmt->execute([$_POST["kapsam_adi"]]);
+    }
+    if (isset($_POST["sil_id"])) {
+        $stmt = $conn->prepare("DELETE FROM kapsamlar WHERE id = ?");
+        $stmt->execute([$_POST["sil_id"]]);
     }
 }
+$kapsamlar = $conn->query("SELECT * FROM kapsamlar")->fetchAll();
 ?>
+<!DOCTYPE html>
+<html>
+<head><title>Kapsamlar</title></head>
+<body>
+<h2>Kapsam Listesi</h2>
+<ul>
+<?php foreach ($kapsamlar as $kapsam): ?>
+<li><?= htmlspecialchars($kapsam['kapsam_adi']) ?>
+<form method="post" style="display:inline;"><input type="hidden" name="sil_id" value="<?= $kapsam['id'] ?>"><button>Sil</button></form>
+</li>
+<?php endforeach; ?>
+</ul>
+<h3>Yeni Kapsam Ekle</h3>
+<form method="post"><input name="kapsam_adi"><button>Ekle</button></form>
+</body>
+</html>

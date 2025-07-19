@@ -1,48 +1,71 @@
 <?php
 include 'db.php';
+include 'sidebar.php';
+
+if ($_SERVER["REQUEST_METHOD"] == "POST") {
+    $scopeName = $_POST['scope_name'];
+    $includedItems = $_POST['included_items'] ?? [];
+    $descriptions = $_POST['descriptions'] ?? [];
+
+    try {
+        // Yeni kapsamı ekle
+        $stmt = $conn->prepare("INSERT INTO scopes (name) VALUES (:name)");
+        $stmt->execute(['name' => $scopeName]);
+        $scopeId = $conn->lastInsertId();
+
+        // Dahil edilen iş kalemlerini ekle
+        foreach ($includedItems as $itemId) {
+            $description = $descriptions[$itemId] ?? '';
+            $stmt = $conn->prepare("INSERT INTO scope_items (scope_id, item_id, description) VALUES (:scope_id, :item_id, :description)");
+            $stmt->execute([
+                'scope_id' => $scopeId,
+                'item_id' => $itemId,
+                'description' => $description
+            ]);
+        }
+
+        echo "<script>alert('Kapsam başarıyla kaydedildi.'); window.location.href='kapsamlar.php';</script>";
+        exit;
+
+    } catch (PDOException $e) {
+        echo "Hata: " . $e->getMessage();
+    }
+}
 ?>
 
-<div style="display: flex;">
-  <div style="width: 200px;">
-    <?php include 'sidebar.php'; ?>
-  </div>
+<h2>Yeni Kapsam Oluştur</h2>
 
-  <div style="flex: 1; padding: 10px;">
-    <h2>Yeni Kapsam Oluştur</h2>
-    <form method="post" action="kapsam_kaydet.php">
-      <label for="scope_name">Kapsam Adı:</label>
-      <input type="text" name="scope_name" id="scope_name" required><br><br>
+<form method="POST" action="">
+    <label for="scope_name">Kapsam Adı:</label>
+    <input type="text" name="scope_name" required><br><br>
 
-      <table border="1" cellpadding="5" cellspacing="0">
+    <table border="1">
         <tr>
-          <th>Kategori</th>
-          <th>İş Kalemi</th>
-          <th>Açıklama</th>
-          <th>Dahil Et</th>
+            <th>Kategori</th>
+            <th>İş Kalemi</th>
+            <th>Açıklama</th>
+            <th>Dahil Et</th>
         </tr>
 
         <?php
-        $stmt = $pdo->query("SELECT items.id AS item_id, items.name AS item_name, items.description, categories.name AS category_name
-                             FROM items
-                             JOIN categories ON items.category_id = categories.id");
+        $stmt = $conn->query("SELECT items.id, items.name AS item_name, items.default_description, categories.name AS category_name
+                              FROM items
+                              JOIN categories ON items.category_id = categories.id
+                              ORDER BY categories.name, items.name");
+        $items = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-        while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
-          echo "<tr>";
-          echo "<td>{$row['category_name']}</td>";
-
-          echo "<td><input type='text' name='item_name[{$row['item_id']}]' value=\"" . htmlspecialchars($row['item_name']) . "\" style='width: 200px;'></td>";
-
-          echo "<td><textarea name='description[{$row['item_id']}]' rows='2' style='width: 300px;'>" . htmlspecialchars($row['description']) . "</textarea></td>";
-
-          echo "<td style='text-align: center;'><input type='checkbox' name='include[{$row['item_id']}]'></td>";
-
-          echo "</tr>";
-        }
+        foreach ($items as $item):
         ?>
-      </table>
+            <tr>
+                <td><?= htmlspecialchars($item['category_name']) ?></td>
+                <td><input type="text" value="<?= htmlspecialchars($item['item_name']) ?>" readonly></td>
+                <td>
+                    <textarea name="descriptions[<?= $item['id'] ?>]" rows="2" cols="40"><?= htmlspecialchars($item['default_description']) ?></textarea>
+                </td>
+                <td><input type="checkbox" name="included_items[]" value="<?= $item['id'] ?>"></td>
+            </tr>
+        <?php endforeach; ?>
+    </table>
 
-      <br>
-      <button type="submit">Kaydet</button>
-    </form>
-  </div>
-</div>
+    <br><button type="submit">Kaydet</button>
+</form>
