@@ -3,15 +3,15 @@
 include "db.php";
 if ($_SERVER["REQUEST_METHOD"] === "POST") {
     if (isset($_POST["kapsam_adi"])) {
-        $stmt = $conn->prepare("INSERT INTO kapsamlar (kapsam_adi) VALUES (?)");
+        $stmt = $pdo->prepare("INSERT INTO kapsamlar (kapsam_adi) VALUES (?)");
         $stmt->execute([$_POST["kapsam_adi"]]);
     }
     if (isset($_POST["sil_id"])) {
-        $stmt = $conn->prepare("DELETE FROM kapsamlar WHERE id = ?");
+        $stmt = $pdo->prepare("DELETE FROM kapsamlar WHERE id = ?");
         $stmt->execute([$_POST["sil_id"]]);
     }
 }
-$kapsamlar = $conn->query("SELECT * FROM kapsamlar")->fetchAll();
+$kapsamlar = $pdo->query("SELECT * FROM kapsamlar")->fetchAll();
 ?>
 <!DOCTYPE html>
 <html>

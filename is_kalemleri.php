@@ -3,15 +3,15 @@
 include "db.php";
 if ($_SERVER["REQUEST_METHOD"] === "POST") {
     if (isset($_POST["baslik"])) {
-        $stmt = $conn->prepare("INSERT INTO is_kalemleri (kategori_id, baslik, aciklama) VALUES (?, ?, ?)");
+        $stmt = $pdo->prepare("INSERT INTO is_kalemleri (kategori_id, baslik, aciklama) VALUES (?, ?, ?)");
         $stmt->execute([$_POST["kategori_id"], $_POST["baslik"], $_POST["aciklama"]]);
     }
     if (isset($_POST["sil_id"])) {
-        $stmt = $conn->prepare("DELETE FROM is_kalemleri WHERE id = ?");
+        $stmt = $pdo->prepare("DELETE FROM is_kalemleri WHERE id = ?");
         $stmt->execute([$_POST["sil_id"]]);
     }
 }
-$is_kalemleri = $conn->query("SELECT ik.*, k.kategori_adi FROM is_kalemleri ik JOIN kategoriler k ON ik.kategori_id = k.id")->fetchAll();
+$is_kalemleri = $pdo->query("SELECT ik.*, k.kategori_adi FROM is_kalemleri ik JOIN kategoriler k ON ik.kategori_id = k.id")->fetchAll();
 ?>
 <!DOCTYPE html>
 <html>
