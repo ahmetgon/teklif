@@ -1,31 +1,43 @@
 <?php
-// kapsamlar.php - tek dosyada kapsam listeleme, ekleme, silme işlemleri
-include "db.php";
-if ($_SERVER["REQUEST_METHOD"] === "POST") {
-    if (isset($_POST["kapsam_adi"])) {
-        $stmt = $pdo->prepare("INSERT INTO scopes (name) VALUES (?)");
-        $stmt->execute([$_POST["kapsam_adi"]]);
+// kapsamlar.php - kapsam listeleme, ekleme, silme
+include 'db.php';
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    if (isset($_POST['kapsam_adi'])) {
+        $stmt = $pdo->prepare('INSERT INTO scopes (name) VALUES (?)');
+        $stmt->execute([$_POST['kapsam_adi']]);
     }
-    if (isset($_POST["sil_id"])) {
-        $stmt = $pdo->prepare("DELETE FROM scopes WHERE id = ?");
-        $stmt->execute([$_POST["sil_id"]]);
+    if (isset($_POST['sil_id'])) {
+        $stmt = $pdo->prepare('DELETE FROM scopes WHERE id = ?');
+        $stmt->execute([$_POST['sil_id']]);
     }
 }
-$kapsamlar = $pdo->query("SELECT * FROM scopes")->fetchAll();
+$kapsamlar = $pdo->query('SELECT * FROM scopes')->fetchAll();
 ?>
-<!DOCTYPE html>
-<html>
-<head><title>Kapsamlar</title></head>
-<body>
 <h2>Kapsam Listesi</h2>
-<ul>
-<?php foreach ($kapsamlar as $kapsam): ?>
-<li><?= htmlspecialchars($kapsam['name']) ?>
-<form method="post" style="display:inline;"><input type="hidden" name="sil_id" value="<?= $kapsam['id'] ?>"><button>Sil</button></form>
-</li>
-<?php endforeach; ?>
-</ul>
+<table class="table datatable" id="kapsamlar-table">
+    <thead>
+        <tr><th>Kapsam Adı</th><th>Sil</th></tr>
+    </thead>
+    <tbody>
+    <?php foreach ($kapsamlar as $kapsam): ?>
+        <tr>
+            <td><?= htmlspecialchars($kapsam['name']) ?></td>
+            <td>
+                <form method="post" onsubmit="return confirm('Silinsin mi?');" class="d-inline">
+                    <input type="hidden" name="sil_id" value="<?= $kapsam['id'] ?>">
+                    <button class="btn btn-sm btn-danger">Sil</button>
+                </form>
+            </td>
+        </tr>
+    <?php endforeach; ?>
+    </tbody>
+</table>
 <h3>Yeni Kapsam Ekle</h3>
-<form method="post"><input name="kapsam_adi"><button>Ekle</button></form>
-</body>
-</html>
+<form method="post" class="row g-2 mb-3">
+    <div class="col-auto">
+        <input class="form-control" name="kapsam_adi" required>
+    </div>
+    <div class="col-auto">
+        <button class="btn btn-primary">Ekle</button>
+    </div>
+</form>
