@@ -3,15 +3,15 @@
 include "db.php";
 if ($_SERVER["REQUEST_METHOD"] === "POST") {
     if (isset($_POST["kapsam_adi"])) {
-        $stmt = $pdo->prepare("INSERT INTO kapsamlar (kapsam_adi) VALUES (?)");
+        $stmt = $pdo->prepare("INSERT INTO scopes (name) VALUES (?)");
         $stmt->execute([$_POST["kapsam_adi"]]);
     }
     if (isset($_POST["sil_id"])) {
-        $stmt = $pdo->prepare("DELETE FROM kapsamlar WHERE id = ?");
+        $stmt = $pdo->prepare("DELETE FROM scopes WHERE id = ?");
         $stmt->execute([$_POST["sil_id"]]);
     }
 }
-$kapsamlar = $pdo->query("SELECT * FROM kapsamlar")->fetchAll();
+$kapsamlar = $pdo->query("SELECT * FROM scopes")->fetchAll();
 ?>
 <!DOCTYPE html>
 <html>
@@ -20,7 +20,7 @@ $kapsamlar = $pdo->query("SELECT * FROM kapsamlar")->fetchAll();
 <h2>Kapsam Listesi</h2>
 <ul>
 <?php foreach ($kapsamlar as $kapsam): ?>
-<li><?= htmlspecialchars($kapsam['kapsam_adi']) ?>
+<li><?= htmlspecialchars($kapsam['name']) ?>
 <form method="post" style="display:inline;"><input type="hidden" name="sil_id" value="<?= $kapsam['id'] ?>"><button>Sil</button></form>
 </li>
 <?php endforeach; ?>

@@ -15,12 +15,10 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
         // Dahil edilen iş kalemlerini ekle
         foreach ($includedItems as $itemId) {
-            $description = $descriptions[$itemId] ?? '';
-            $stmt = $pdo->prepare("INSERT INTO scope_items (scope_id, item_id, description) VALUES (:scope_id, :item_id, :description)");
+            $stmt = $pdo->prepare("INSERT INTO scope_selections (scope_id, item_id) VALUES (:scope_id, :item_id)");
             $stmt->execute([
                 'scope_id' => $scopeId,
-                'item_id' => $itemId,
-                'description' => $description
+                'item_id' => $itemId
             ]);
         }
 
@@ -48,7 +46,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         </tr>
 
         <?php
-        $stmt = $pdo->query("SELECT items.id, items.name AS item_name, items.default_description, categories.name AS category_name
+        $stmt = $pdo->query("SELECT items.id, items.name AS item_name, items.description AS default_description, categories.name AS category_name
                               FROM items
                               JOIN categories ON items.category_id = categories.id
                               ORDER BY categories.name, items.name");
@@ -69,3 +67,5 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
     <br><button type="submit">Kaydet</button>
 </form>
+</body>
+</html>
