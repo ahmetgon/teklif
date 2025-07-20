@@ -87,8 +87,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             <td><input type="text" name="rows[<?= $index ?>][category]" class="form-control" value="<?= htmlspecialchars($item['category_name']) ?>"></td>
             <td><input type="text" name="rows[<?= $index ?>][item_name]" class="form-control" value="<?= htmlspecialchars($item['item_name']) ?>"></td>
             <td>
-                <textarea name="rows[<?= $index ?>][description]" rows="2" class="form-control"><?= htmlspecialchars($item['default_description']) ?></textarea>
-                <input type="hidden" name="rows[<?= $index ?>][item_id]" value="<?= $item['id'] ?>">
+                <textarea name="rows[<?= $index ?>][description]" rows="2" class="form-control"><?= htmlspecialchars($item['description']) ?></textarea>
+                <input type="hidden" name="rows[<?= $index ?>][item_id]" value="<?= $item['item_id'] ?>">
             </td>
             <td class="text-center">
                 <input type="hidden" name="rows[<?= $index ?>][included]" value="0">
