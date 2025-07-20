@@ -1,6 +1,8 @@
 <?php
 include 'db.php';
-$title = 'Yeni Kapsam Oluştur';
+$editId = isset($_GET['id']) ? intval($_GET['id']) : 0;
+$editing = $editId > 0;
+$title = $editing ? 'Kapsamı Düzenle' : 'Yeni Kapsam Oluştur';
 include 'header.php';
 ?>
 <div class="row">
@@ -10,15 +12,21 @@ include 'header.php';
     <div class="col-md-10 pt-3">
         <?php
         if ($_SERVER['REQUEST_METHOD'] == 'POST') {
+            $scopeId   = isset($_POST['scope_id']) ? intval($_POST['scope_id']) : 0;
             $scopeName = $_POST['scope_name'];
-            $rows = $_POST['rows'] ?? [];
+            $rows      = $_POST['rows'] ?? [];
             try {
                 $pdo->beginTransaction();
-                $stmt = $pdo->prepare('INSERT INTO scopes (name) VALUES (:name)');
-                $stmt->execute(['name' => $scopeName]);
-                $scopeId = $pdo->lastInsertId();
+                if ($scopeId) {
+                    $pdo->prepare('UPDATE scopes SET name = ? WHERE id = ?')->execute([$scopeName, $scopeId]);
+                    $pdo->prepare('DELETE FROM scope_selections WHERE scope_id = ?')->execute([$scopeId]);
+                } else {
+                    $stmt = $pdo->prepare('INSERT INTO scopes (name) VALUES (?)');
+                    $stmt->execute([$scopeName]);
+                    $scopeId = $pdo->lastInsertId();
+                }
 
-                $insert = $pdo->prepare('INSERT INTO scope_selections (scope_id, item_id, category_name, item_name, description, included, quantity) VALUES (:scope_id, :item_id, :category_name, :item_name, :description, :included, :quantity)');
+                $insert = $pdo->prepare('INSERT INTO scope_selections (scope_id, item_id, category_name, item_name, description, included, quantity) VALUES (:scope_id, :item_id, :category_name, :item_name, :description, :included, 0)');
                 foreach ($rows as $row) {
                     $insert->execute([
                         'scope_id' => $scopeId,
@@ -26,12 +34,11 @@ include 'header.php';
                         'category_name' => $row['category'] ?? '',
                         'item_name' => $row['item_name'] ?? '',
                         'description' => $row['description'] ?? '',
-                        'included' => isset($row['included']) ? (int)$row['included'] : 0,
-                        'quantity' => isset($row['quantity']) ? (int)$row['quantity'] : 0
+                        'included' => isset($row['included']) ? (int)$row['included'] : 0
                     ]);
                 }
                 $pdo->commit();
-                echo "<script>alert('Kapsam başarıyla kaydedildi.'); window.location.href='index.php';</script>";
+                echo "<script>alert('Kapsam başarıyla kaydedildi.'); window.location.href='index.php?page=kapsamlar';</script>";
                 exit;
             } catch (PDOException $e) {
                 $pdo->rollBack();
@@ -39,11 +46,38 @@ include 'header.php';
             }
         }
         ?>
-        <h2>Yeni Kapsam Oluştur</h2>
+        <?php
+        if ($editing && $_SERVER['REQUEST_METHOD'] !== 'POST') {
+            $stmt = $pdo->prepare('SELECT name FROM scopes WHERE id = ?');
+            $stmt->execute([$editId]);
+            $scopeName = $stmt->fetchColumn();
+            $stmt = $pdo->prepare('SELECT * FROM scope_selections WHERE scope_id = ?');
+            $stmt->execute([$editId]);
+            $items = $stmt->fetchAll();
+        } elseif (!isset($items)) {
+            $scopeName = '';
+            $stmt = $pdo->query("SELECT items.id, items.name AS item_name, items.description AS default_description, categories.name AS category_name FROM items JOIN categories ON items.category_id = categories.id ORDER BY categories.name, items.name");
+            $defaults = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            $items = [];
+            foreach ($defaults as $it) {
+                $items[] = [
+                    'item_id' => $it['id'],
+                    'category_name' => $it['category_name'],
+                    'item_name' => $it['item_name'],
+                    'description' => $it['default_description'],
+                    'included' => 0
+                ];
+            }
+        }
+        ?>
+        <h2><?= htmlspecialchars($title) ?></h2>
         <form method="POST" action="" class="mb-3">
+            <?php if ($editing): ?>
+            <input type="hidden" name="scope_id" value="<?= $editId ?>">
+            <?php endif; ?>
             <div class="mb-3">
                 <label for="scope_name" class="form-label">Kapsam Adı:</label>
-                <input type="text" name="scope_name" id="scope_name" class="form-control" required>
+                <input type="text" name="scope_name" id="scope_name" class="form-control" value="<?= htmlspecialchars($scopeName) ?>" required>
             </div>
             <table class="table table-striped" id="scope-items">
     <thead>
@@ -51,17 +85,12 @@ include 'header.php';
             <th>Kategori</th>
             <th>İş Kalemi</th>
             <th>Açıklama</th>
-            <th>Adet</th>
             <th>Dahil</th>
             <th>Sil</th>
         </tr>
     </thead>
     <tbody>
-<?php
-                $stmt = $pdo->query("SELECT items.id, items.name AS item_name, items.description AS default_description, categories.name AS category_name FROM items JOIN categories ON items.category_id = categories.id ORDER BY categories.name, items.name");
-                $items = $stmt->fetchAll(PDO::FETCH_ASSOC);
-                foreach ($items as $index => $item):
-?>
+<?php foreach ($items as $index => $item): ?>
         <tr>
             <td><input type="text" name="rows[<?= $index ?>][category]" class="form-control" value="<?= htmlspecialchars($item['category_name']) ?>"></td>
             <td><input type="text" name="rows[<?= $index ?>][item_name]" class="form-control" value="<?= htmlspecialchars($item['item_name']) ?>"></td>
@@ -69,7 +98,6 @@ include 'header.php';
                 <textarea name="rows[<?= $index ?>][description]" rows="2" class="form-control"><?= htmlspecialchars($item['default_description']) ?></textarea>
                 <input type="hidden" name="rows[<?= $index ?>][item_id]" value="<?= $item['id'] ?>">
             </td>
-            <td><input type="number" name="rows[<?= $index ?>][quantity]" class="form-control" value="0" min="0"></td>
             <td class="text-center">
                 <input type="hidden" name="rows[<?= $index ?>][included]" value="0">
                 <input type="checkbox" name="rows[<?= $index ?>][included]" value="1">
@@ -120,7 +148,6 @@ window.addEventListener('load', function(){
             <td><input type="text" name="rows[${rowIndex}][category]" class="form-control" value="${escCat}"></td>
             <td><input type="text" name="rows[${rowIndex}][item_name]" class="form-control" value="${escItem}"></td>
             <td><textarea name="rows[${rowIndex}][description]" rows="2" class="form-control">${escDesc}</textarea><input type="hidden" name="rows[${rowIndex}][item_id]" value="0"></td>
-            <td><input type="number" name="rows[${rowIndex}][quantity]" class="form-control" value="0" min="0"></td>
             <td class="text-center"><input type="hidden" name="rows[${rowIndex}][included]" value="0"><input type="checkbox" name="rows[${rowIndex}][included]" value="1" checked></td>
             <td><button type="button" class="btn btn-sm btn-danger delete-row">Sil</button></td>
         </tr>`;
