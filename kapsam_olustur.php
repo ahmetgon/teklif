@@ -3,15 +3,7 @@ include 'db.php';
 $editId = isset($_GET['id']) ? intval($_GET['id']) : 0;
 $editing = $editId > 0;
 $title = $editing ? 'Kapsamı Düzenle' : 'Yeni Kapsam Oluştur';
-include 'header.php';
-?>
-<div class="row">
-    <div class="col-md-2 bg-light min-vh-100">
-        <?php include 'sidebar.php'; ?>
-    </div>
-    <div class="col-md-10 pt-3">
-        <?php
-        if ($_SERVER['REQUEST_METHOD'] == 'POST') {
+if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             $scopeId   = isset($_POST['scope_id']) ? intval($_POST['scope_id']) : 0;
             $scopeName = $_POST['scope_name'];
             $rows      = $_POST['rows'] ?? [];
@@ -131,8 +123,6 @@ include 'header.php';
 
         <button type="submit" class="btn btn-success">Kaydet</button>
         </form>
-    </div>
-</div>
 <script>
 window.addEventListener('load', function(){
     let rowIndex = <?php echo count($items); ?>;
@@ -163,4 +153,3 @@ window.addEventListener('load', function(){
     });
 });
 </script>
-<?php include 'footer.php'; ?>
