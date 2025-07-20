@@ -63,12 +63,5 @@ $kapsamlar = $pdo->query('SELECT * FROM scopes')->fetchAll();
 </form>
 <?php else: ?>
 <h3>Yeni Kapsam Ekle</h3>
-<form method="post" class="row g-2 mb-3">
-    <div class="col-auto">
-        <input class="form-control" name="kapsam_adi" required>
-    </div>
-    <div class="col-auto">
-        <button class="btn btn-primary">Ekle</button>
-    </div>
-</form>
+<a href="?page=kapsam_olustur" class="btn btn-primary mb-3">Kapsam Oluştur</a>
 <?php endif; ?>
