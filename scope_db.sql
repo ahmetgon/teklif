@@ -133,6 +133,9 @@ CREATE TABLE `scope_selections` (
   `id` int(11) NOT NULL,
   `scope_id` int(11) NOT NULL,
   `item_id` int(11) NOT NULL,
+  `category_name` varchar(255) DEFAULT NULL,
+  `item_name` varchar(255) DEFAULT NULL,
+  `description` text DEFAULT NULL,
   `included` tinyint(1) NOT NULL DEFAULT 1,
   `quantity` int(11) DEFAULT 0,
   `created_at` timestamp NOT NULL DEFAULT current_timestamp()
