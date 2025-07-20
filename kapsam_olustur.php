@@ -19,14 +19,39 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 }
 
                 $insert = $pdo->prepare('INSERT INTO scope_selections (scope_id, item_id, category_name, item_name, description, included, quantity) VALUES (:scope_id, :item_id, :category_name, :item_name, :description, :included, 0)');
+
+                $findCat = $pdo->prepare('SELECT id FROM categories WHERE name = ?');
+                $insertCat = $pdo->prepare('INSERT INTO categories (name) VALUES (?)');
+                $insertItem = $pdo->prepare('INSERT INTO items (category_id, name, description) VALUES (?, ?, ?)');
+
                 foreach ($rows as $row) {
+                    $itemId = isset($row['item_id']) ? intval($row['item_id']) : 0;
+                    $categoryName = $row['category'] ?? '';
+                    $itemName = $row['item_name'] ?? '';
+                    $description = $row['description'] ?? '';
+                    $included = isset($row['included']) ? (int)$row['included'] : 0;
+
+                    if ($itemId <= 0 && $itemName) {
+                        // Make sure the category exists and get its id
+                        $findCat->execute([$categoryName]);
+                        $categoryId = $findCat->fetchColumn();
+                        if (!$categoryId) {
+                            $insertCat->execute([$categoryName]);
+                            $categoryId = $pdo->lastInsertId();
+                        }
+
+                        // Insert the new item
+                        $insertItem->execute([$categoryId, $itemName, $description]);
+                        $itemId = $pdo->lastInsertId();
+                    }
+
                     $insert->execute([
                         'scope_id' => $scopeId,
-                        'item_id' => $row['item_id'] ?? 0,
-                        'category_name' => $row['category'] ?? '',
-                        'item_name' => $row['item_name'] ?? '',
-                        'description' => $row['description'] ?? '',
-                        'included' => isset($row['included']) ? (int)$row['included'] : 0
+                        'item_id' => $itemId,
+                        'category_name' => $categoryName,
+                        'item_name' => $itemName,
+                        'description' => $description,
+                        'included' => $included
                     ]);
                 }
                 $pdo->commit();
