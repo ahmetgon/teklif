@@ -13,7 +13,7 @@ include 'header.php';
                 $stmt->execute(['name' => $scopeName]);
                 $scopeId = $pdo->lastInsertId();
 
-                $insert = $pdo->prepare('INSERT INTO scope_selections (scope_id, item_id, category_name, item_name, description, included) VALUES (:scope_id, :item_id, :category_name, :item_name, :description, :included)');
+                $insert = $pdo->prepare('INSERT INTO scope_selections (scope_id, item_id, category_name, item_name, description, included, quantity) VALUES (:scope_id, :item_id, :category_name, :item_name, :description, :included, :quantity)');
                 foreach ($rows as $row) {
                     $insert->execute([
                         'scope_id' => $scopeId,
@@ -21,7 +21,8 @@ include 'header.php';
                         'category_name' => $row['category'] ?? '',
                         'item_name' => $row['item_name'] ?? '',
                         'description' => $row['description'] ?? '',
-                        'included' => isset($row['included']) ? (int)$row['included'] : 0
+                        'included' => isset($row['included']) ? (int)$row['included'] : 0,
+                        'quantity' => isset($row['quantity']) ? (int)$row['quantity'] : 0
                     ]);
                 }
                 $pdo->commit();
@@ -45,6 +46,7 @@ include 'header.php';
             <th>Kategori</th>
             <th>İş Kalemi</th>
             <th>Açıklama</th>
+            <th>Adet</th>
             <th>Dahil</th>
             <th>Sil</th>
         </tr>
@@ -62,6 +64,7 @@ include 'header.php';
                 <textarea name="rows[<?= $index ?>][description]" rows="2" class="form-control"><?= htmlspecialchars($item['default_description']) ?></textarea>
                 <input type="hidden" name="rows[<?= $index ?>][item_id]" value="<?= $item['id'] ?>">
             </td>
+            <td><input type="number" name="rows[<?= $index ?>][quantity]" class="form-control" value="0"></td>
             <td class="text-center">
                 <input type="hidden" name="rows[<?= $index ?>][included]" value="0">
                 <input type="checkbox" name="rows[<?= $index ?>][included]" value="1">
@@ -89,6 +92,9 @@ include 'header.php';
         <textarea id="new-description" class="form-control" rows="2" placeholder="Açıklama"></textarea>
     </div>
     <div class="col-auto">
+        <input id="new-quantity" type="number" class="form-control" placeholder="Adet" value="0">
+    </div>
+    <div class="col-auto">
         <button type="button" id="add-row-btn" class="btn btn-primary">Satır Ekle</button>
     </div>
 </div>
@@ -102,14 +108,17 @@ window.addEventListener('load', function(){
         const cat = $('#new-category').val();
         const item = $('#new-item').val();
         const desc = $('#new-description').val();
+        const qty = $('#new-quantity').val() || 0;
         if(!cat || !item) return;
         const escCat = $('<div>').text(cat).html();
         const escItem = $('<div>').text(item).html();
         const escDesc = $('<div>').text(desc).html();
+        const escQty = $('<div>').text(qty).html();
         let row = `<tr>
             <td><input type="text" name="rows[${rowIndex}][category]" class="form-control" value="${escCat}"></td>
             <td><input type="text" name="rows[${rowIndex}][item_name]" class="form-control" value="${escItem}"></td>
             <td><textarea name="rows[${rowIndex}][description]" rows="2" class="form-control">${escDesc}</textarea><input type="hidden" name="rows[${rowIndex}][item_id]" value="0"></td>
+            <td><input type="number" name="rows[${rowIndex}][quantity]" class="form-control" value="${escQty}"></td>
             <td class="text-center"><input type="hidden" name="rows[${rowIndex}][included]" value="0"><input type="checkbox" name="rows[${rowIndex}][included]" value="1" checked></td>
             <td><button type="button" class="btn btn-sm btn-danger delete-row">Sil</button></td>
         </tr>`;
@@ -117,6 +126,7 @@ window.addEventListener('load', function(){
         $('#new-category').val('');
         $('#new-item').val('');
         $('#new-description').val('');
+        $('#new-quantity').val('0');
         rowIndex++;
     });
 
