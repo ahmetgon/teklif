@@ -18,14 +18,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         foreach ($rows as $row) {
             $selId = intval($row['selection_id']);
             $included = isset($row['included']) ? (int)$row['included'] : 0;
-            $qty = isset($row['quantity']) ? intval($row['quantity']) : 0;
+            $qty = isset($row['quantity']) ? max(0, intval($row['quantity'])) : 0;
             $insert->execute([$scopeId, $selId, $included, $qty]);
         }
         $pdo->commit();
-        echo "<script>alert('Kaydedildi');</script>";
+        header('Location: kapsam_link.php?c=' . urlencode($scopeName) . '&saved=1');
+        exit;
     } catch (PDOException $e) {
         $pdo->rollBack();
-        echo 'Hata: ' . $e->getMessage();
+        $error = $e->getMessage();
     }
 }
 
@@ -45,6 +46,11 @@ foreach ($items as $it) {
 ?>
 <?php $title = 'Kapsam: ' . htmlspecialchars($scope['name']); include 'header.php'; ?>
 <h2><?= htmlspecialchars($scope['name']) ?></h2>
+<?php if (!empty($error)): ?>
+<div class="alert alert-danger">Hata: <?= htmlspecialchars($error) ?></div>
+<?php elseif (isset($_GET['saved'])): ?>
+<div class="alert alert-success">Kaydedildi</div>
+<?php endif; ?>
 <form method="post">
     <h3>Kapsama Dahil Olanlar</h3>
     <table class="table" id="included-table">
